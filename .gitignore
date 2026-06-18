@@ -1,0 +1,4 @@
+
+# omnispark — added by install.py
+.omnispark/state
+.omnispark/snapshots

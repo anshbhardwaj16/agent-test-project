@@ -1,5 +1,6 @@
 import anthropic
 import json
+import os
 
 
 client = anthropic.Anthropic()
@@ -27,6 +28,17 @@ TOOLS = [
             "required": ["expression"],
         },
     },
+    {
+        "name": "read_file",
+        "description": "Read the contents of a file by path (relative to the working directory)",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "file_path": {"type": "string", "description": "Relative path to the file"}
+            },
+            "required": ["file_path"],
+        },
+    },
 ]
 
 
@@ -41,6 +53,17 @@ def handle_tool_call(name: str, inputs: dict) -> str:
             return json.dumps({"result": result})
         except Exception as e:
             return json.dumps({"error": str(e)})
+    elif name == "read_file":
+        file_path = inputs["file_path"]
+        if ".." in file_path or os.path.isabs(file_path) or file_path.startswith("/"):
+            return json.dumps({"error": "Path not allowed"})
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.dumps({"content": f.read()})
+        except FileNotFoundError:
+            return json.dumps({"error": f"File not found: {file_path}"})
+        except PermissionError:
+            return json.dumps({"error": f"Permission denied: {file_path}"})
     return json.dumps({"error": "Unknown tool"})
 
 
