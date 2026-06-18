@@ -1,0 +1,43 @@
+{
+  "_kind": "repo",
+  "_extends": "../../.omnispark/metadata.json",
+  "schema_version": "1.0",
+  "repo": {
+    "name": "agent-test-project",
+    "purpose": "Minimal Claude tool-use agent demonstrating the agentic loop pattern with get_weather and calculate tools via the Anthropic Python SDK.",
+    "type": "unknown",
+    "language": "python",
+    "framework": "anthropic-sdk",
+    "lifecycle": "experimental",
+    "owners": [
+      "ansh.bhardwaj@accenture.com"
+    ],
+    "data_classification": "internal",
+    "cloud": "none",
+    "migration_role": "none"
+  },
+  "dependencies": {
+    "depends_on": [],
+    "provides_to": [],
+    "strategic": []
+  },
+  "ci": {
+    "test_path": "test_agent.py",
+    "coverage_threshold": null,
+    "test_file_prefix": "test_"
+  },
+  "connections_used": {
+    "_inspected_value": ["ANTHROPIC_API_KEY"]
+  },
+  "_inspected": {
+    "registered_at": "2026-06-18T11:49:03+00:00",
+    "framework_version_seen": "1.36.0",
+    "type": "unknown",
+    "type_decision_reason": "T11 applies — no T1-T9 signals found: plain Python script with requirements.txt only (no pyproject.toml, no FastAPI, no dbt, no cloud infra). Inspector hint was also 'unknown'.",
+    "scanner_version": 2,
+    "inventory": {
+      "containers": [],
+      "pyfunctions": []
+    }
+  }
+}
