@@ -1,7 +1,8 @@
 import json
 import os
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, Mock
+from io import BytesIO
 from agent import handle_tool_call, run_agent
 
 
@@ -63,6 +64,46 @@ def test_run_agent_end_turn():
     with patch("agent.client.messages.create", return_value=mock_response):
         result = run_agent("Say hello")
     assert result == "Hello!"
+
+
+def test_web_fetch_blocks_non_https():  # AC3 KAN-6
+    result = json.loads(handle_tool_call("web_fetch", {"url": "file:///etc/passwd"}))
+    assert "error" in result
+    assert "Only http and https" in result["error"]
+
+
+def test_web_fetch_blocks_ftp():  # AC3 KAN-6
+    result = json.loads(handle_tool_call("web_fetch", {"url": "ftp://example.com/file"}))
+    assert "error" in result
+
+
+def test_web_fetch_returns_structured_json():  # AC2 KAN-6
+    mock_resp = Mock()
+    mock_resp.status = 200
+    mock_resp.read.return_value = b"<html>hello</html>"
+    mock_resp.__enter__ = lambda s: s
+    mock_resp.__exit__ = Mock(return_value=False)
+
+    with patch("urllib.request.urlopen", return_value=mock_resp):
+        result = json.loads(handle_tool_call("web_fetch", {"url": "https://example.com"}))
+
+    assert result["url"] == "https://example.com"
+    assert result["status_code"] == 200
+    assert "content" in result
+
+
+def test_web_fetch_truncates_to_4000_chars():  # AC4 KAN-6
+    long_content = b"x" * 10000
+    mock_resp = Mock()
+    mock_resp.status = 200
+    mock_resp.read.return_value = long_content
+    mock_resp.__enter__ = lambda s: s
+    mock_resp.__exit__ = Mock(return_value=False)
+
+    with patch("urllib.request.urlopen", return_value=mock_resp):
+        result = json.loads(handle_tool_call("web_fetch", {"url": "https://example.com"}))
+
+    assert len(result["content"]) <= 4000
 
 
 if __name__ == "__main__":
