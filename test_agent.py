@@ -3,6 +3,7 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch, Mock
 from io import BytesIO
+from datetime import datetime
 from agent import handle_tool_call, run_agent
 
 
@@ -104,6 +105,53 @@ def test_web_fetch_truncates_to_4000_chars():  # AC4 KAN-6
         result = json.loads(handle_tool_call("web_fetch", {"url": "https://example.com"}))
 
     assert len(result["content"]) <= 4000
+
+
+def test_get_current_time():  # AC1, AC2
+    result = json.loads(handle_tool_call("get_current_time", {}))
+    assert "utc_time" in result
+    assert "unix_timestamp" in result
+    assert "readable" in result
+    assert result["utc_time"].endswith("Z")
+    assert isinstance(result["unix_timestamp"], (int, float))
+
+
+def test_get_current_time_is_recent():  # AC2
+    result = json.loads(handle_tool_call("get_current_time", {}))
+    timestamp = result["unix_timestamp"]
+    from datetime import timezone
+    now = datetime.now(timezone.utc).timestamp()
+    assert abs(now - timestamp) < 2  # should be within 2 seconds
+
+
+def test_get_current_time_millisecond_precision():  # AC2
+    result = json.loads(handle_tool_call("get_current_time", {}))
+    readable = result["readable"]
+    assert "." in readable  # has milliseconds
+    parts = readable.split(".")
+    assert len(parts[1].split()[0]) == 3  # 3 digits for milliseconds
+
+
+def test_get_current_time_in_agent_loop():  # AC3, AC5 integration test
+    from unittest.mock import MagicMock
+    mock_response = MagicMock()
+    mock_response.stop_reason = "tool_use"
+
+    tool_use_block = MagicMock()
+    tool_use_block.type = "tool_use"
+    tool_use_block.name = "get_current_time"
+    tool_use_block.input = {}
+    tool_use_block.id = "call_123"
+
+    mock_response.content = [tool_use_block]
+
+    end_turn_response = MagicMock()
+    end_turn_response.stop_reason = "end_turn"
+    end_turn_response.content = [MagicMock(text="Current time retrieved successfully", spec=["text"])]
+
+    with patch("agent.client.messages.create", side_effect=[mock_response, end_turn_response]):
+        result = run_agent("What is the current time?")
+        assert "Current time retrieved successfully" in result
 
 
 if __name__ == "__main__":

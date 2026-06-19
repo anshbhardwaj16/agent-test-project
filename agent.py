@@ -3,6 +3,7 @@ import json
 import os
 import urllib.request
 import urllib.error
+from datetime import datetime, timezone
 
 
 client = anthropic.Anthropic()
@@ -52,6 +53,15 @@ TOOLS = [
             "required": ["url"],
         },
     },
+    {
+        "name": "get_current_time",
+        "description": "Get the current live time with high precision",
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
 ]
 
 
@@ -94,6 +104,13 @@ def handle_tool_call(name: str, inputs: dict) -> str:
             return json.dumps({"error": f"HTTP {e.code}: {e.reason}", "url": url})
         except Exception as e:
             return json.dumps({"error": str(e), "url": url})
+    elif name == "get_current_time":
+        now = datetime.now(timezone.utc)
+        return json.dumps({
+            "utc_time": now.isoformat().replace("+00:00", "Z"),
+            "unix_timestamp": now.timestamp(),
+            "readable": now.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC",
+        })
     return json.dumps({"error": "Unknown tool"})
 
 
