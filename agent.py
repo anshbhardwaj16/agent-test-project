@@ -1,6 +1,8 @@
 import anthropic
 import json
 import os
+import urllib.request
+import urllib.error
 
 
 client = anthropic.Anthropic()
@@ -39,6 +41,17 @@ TOOLS = [
             "required": ["file_path"],
         },
     },
+    {
+        "name": "web_fetch",
+        "description": "Fetch the content of a public URL and return its text content",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "The http or https URL to fetch"}
+            },
+            "required": ["url"],
+        },
+    },
 ]
 
 
@@ -64,6 +77,23 @@ def handle_tool_call(name: str, inputs: dict) -> str:
             return json.dumps({"error": f"File not found: {file_path}"})
         except PermissionError:
             return json.dumps({"error": f"Permission denied: {file_path}"})
+    elif name == "web_fetch":
+        url = inputs["url"]
+        if not url.startswith("http://") and not url.startswith("https://"):
+            return json.dumps({"error": "Only http and https URLs are allowed"})
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                content = resp.read().decode("utf-8", errors="replace")
+            return json.dumps({
+                "url": url,
+                "status_code": resp.status,
+                "content": content[:4000],
+            })
+        except urllib.error.HTTPError as e:
+            return json.dumps({"error": f"HTTP {e.code}: {e.reason}", "url": url})
+        except Exception as e:
+            return json.dumps({"error": str(e), "url": url})
     return json.dumps({"error": "Unknown tool"})
 
 
