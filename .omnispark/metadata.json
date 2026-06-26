@@ -4,7 +4,7 @@
   "schema_version": "1.0",
   "repo": {
     "name": "agent-test-project",
-    "purpose": "Minimal Claude tool-use agent demonstrating the agentic loop pattern with get_weather and calculate tools via the Anthropic Python SDK.",
+    "purpose": "Minimal Claude tool-use agent demonstrating the agentic loop pattern with get_weather, calculate, read_file, and get_current_date tools via the Anthropic Python SDK.",
     "type": "unknown",
     "language": "python",
     "framework": "anthropic-sdk",
