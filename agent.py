@@ -1,4 +1,5 @@
 import anthropic
+import datetime
 import json
 import os
 
@@ -39,6 +40,20 @@ TOOLS = [
             "required": ["file_path"],
         },
     },
+    {
+        "name": "get_current_date",
+        "description": "Get the current date and time in ISO 8601 format",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "timezone": {
+                    "type": "string",
+                    "description": "Optional timezone name (e.g. 'UTC', 'US/Eastern'). Defaults to UTC.",
+                }
+            },
+            "required": [],
+        },
+    },
 ]
 
 
@@ -64,6 +79,13 @@ def handle_tool_call(name: str, inputs: dict) -> str:
             return json.dumps({"error": f"File not found: {file_path}"})
         except PermissionError:
             return json.dumps({"error": f"Permission denied: {file_path}"})
+    elif name == "get_current_date":
+        tz_name = inputs.get("timezone", "UTC")
+        try:
+            now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            return json.dumps({"datetime_utc": now, "timezone_requested": tz_name})
+        except Exception as e:
+            return json.dumps({"error": str(e)})
     return json.dumps({"error": "Unknown tool"})
 
 
