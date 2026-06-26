@@ -32,13 +32,13 @@ omnispark:
 
 ## What this is
 
-A self-contained Python script (`agent.py`) that wires two stub tools — `get_weather` and `calculate` — into a Claude `tool_use` agentic loop. The loop runs until `stop_reason == "end_turn"`, dispatching tool calls via `handle_tool_call()` and feeding results back as `tool_result` messages. The project exists as a reference implementation and test bed for the tool-use pattern using `claude-sonnet-4-6`.
+A self-contained Python script (`agent.py`) that wires stub tools — `get_weather`, `calculate`, `read_file`, and `get_current_date` — into a Claude `tool_use` agentic loop. The loop runs until `stop_reason == "end_turn"`, dispatching tool calls via `handle_tool_call()` and feeding results back as `tool_result` messages. The project exists as a reference implementation and test bed for the tool-use pattern using `claude-sonnet-4-6`.
 
 There are no services, no containers, and no external dependencies beyond the Anthropic SDK. All tool responses are stubs (hardcoded weather data, `eval`-based math with a safe builtins context).
 
 ## What it owns
 
-- **Entry point**: `agent.py` — agent loop + tool definitions + stub handlers (`get_weather`, `calculate`, `read_file`)
+- **Entry point**: `agent.py` — agent loop + tool definitions + stub handlers (`get_weather`, `calculate`, `read_file`, `get_current_date`)
 - **Tests**: `test_agent.py` — pytest suite covering tool handlers and the mocked agent loop
 - **Runtime credential**: `ANTHROPIC_API_KEY` (read by `anthropic.Anthropic()` at line 5)
 
